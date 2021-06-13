@@ -1,26 +1,23 @@
 #include "UART7.h"
 void UART7_init(uint32 baudrate,uint8 frame){
 	float br;// we will use it for baud rate calculation
-	SYSCTL_RCGCUART_R|=0x10;//clock of the uart 
-	SYSCTL_RCGCGPIO_R|=0x80;//clock of the port
+	SYSCTL_RCGCUART_R|=0x80;//clock of the uart 
+	SYSCTL_RCGCGPIO_R|=0x10 ;//clock of the port
 	while((SYSCTL_PRGPIO_R & 0x10)==0){}
 		
 	UART7_CTL_R=0;//to make sure uart is disabled & flush the fifo in case the uart was enabled and we want to change any thing in the configuration
 	
 	//now we will configure the port A pins 0 & 1 to be UART
-	GPIO_PORTF_LOCK_R=0x4C4F434B;// to lock the port 
-	GPIO_PORTF_CR_R|=0xFF;// to confirm 
-	GPIO_PORTA_DEN_R|=0x03;
-	GPIO_PORTA_AMSEL_R&=~(0x03);
-	GPIO_PORTA_AFSEL_R|=0x03;
-	GPIO_PORTA_PCTL_R=0x11;//put 1 in the 4 bits of E0 & E1
+	GPIO_PORTE_LOCK_R=0x4C4F434B;// to lock the port 
+	GPIO_PORTE_CR_R|=0xFF;// to confirm 
+	GPIO_PORTE_DEN_R|=0x03;
+	GPIO_PORTE_AMSEL_R&=~(0x03);
+	GPIO_PORTE_AFSEL_R|=0x03;
+	GPIO_PORTE_PCTL_R=0x11;//put 1 in the 4 bits of E0 & E1
 	
 	//to configure the baud rate
-	br=(16*10^6)/(16*baudrate);
-	UART7_IBRD_R=(uint32)br;
-	br-=(uint32)br;
-	br=(br*64)+0.5;
-	UART7_FBRD_R=(uint32)br;
+		UART7_IBRD_R=	104;
+		UART7_FBRD_R=11;
 		
 	UART7_CC_R=0;//just to make sure we use the system clock
 	
@@ -68,7 +65,7 @@ void UART7_Trans_string(char *data){
 }
 
 uint8 UART7_Recieve_char(){
-	while (readbit(UART7_FR_R,4)==0){}// if RXFE not = 0 this means there is a data need to be read
-	return (uint8) UART7_DR_R;
+	while (readbit(UART7_FR_R,4)!=0){}// if RXFE not = 0 this means there is a data need to be read
+	return (char) UART7_DR_R;
 }
 
