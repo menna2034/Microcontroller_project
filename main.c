@@ -10,11 +10,14 @@
 #include "stdlib.h"
 #include "math.h"
 #include "stdio.h"
+#include "rtl.h"
+#include "led.h"
 #define MAX_SIZE 1000
 #define My_PI 3.14159265358979323864
 
 void SystemInit(){}
 int counter =0;
+uint8 flag=0;
 float distance=0;
 float logg[1000];
 float lat[1000];
@@ -25,6 +28,7 @@ char input;
 int read_data();
 int i=0;
 int j=0;
+int k=0;
 int  dd;
 float ss;
 float abs_log=0;
@@ -39,8 +43,60 @@ float logg_f1=0;
 float lat_f1=0;
 float logg_f2=0;
 float lat_f2=0;
+//FILE *fptr;
 float deg_to_rad(float deg){
 	return deg*(My_PI/180);
+}
+void reverse(char* str, int len)
+{
+    int i = 0, j = len - 1, temp;
+    while (i < j) {
+        temp = str[i];
+        str[i] = str[j];
+        str[j] = temp;
+        i++;
+        j--;
+    }
+}
+int intToStr(int x, char str[], int d)
+{
+    int i = 0;
+    while (x) {
+        str[i++] = (x % 10) + '0';
+        x = x / 10;
+    }
+  
+    // If number of digits required is more, then
+    // add 0s at the beginning
+    while (i < d)
+        str[i++] = '0';
+  
+    reverse(str, i);
+    str[i] = '\0';
+    return i;
+}
+void ftoa(float n, char* res, int afterpoint)
+{
+    // Extract integer part
+    int ipart = (int)n;
+  
+    // Extract floating part
+    float fpart = n - (float)ipart;
+  
+    // convert integer part to string
+    int i = intToStr(ipart, res, 0);
+  
+    // check for display option after point
+    if (afterpoint != 0) {
+        res[i] = '.'; // add dot
+  
+        // Get the value of fraction part upto given no.
+        // of points after dot. The third parameter 
+        // is needed to handle cases like 233.007
+        fpart = fpart * pow(10, afterpoint);
+  
+        intToStr((int)fpart, res + i + 1, afterpoint);
+    }
 }
 float get_distance_meters(){
 	if(counter==1)
@@ -64,16 +120,15 @@ float get_distance_meters(){
 }
 	
 int main(){
-FILE *fptr;
-fptr=fopen("locations.csv","w+");
-fprintf(fptr,"Latitude, Longitude\n");
+//fptr= fopen("locations.csv","w+");
+//if (fptr!=NULL) {fprintf(fptr,"Latitude,Longitude\n");
 portB_init();
 lcd_init();
 UART0_init(9600,8);
 UART7_init(9600,8);
-
 lcd_comm(0x80);
 lcd_string("Distance= ");
+UART0_Trans_string("Latitude,Longitude\n");
 wait_ms(2000);
 	while(1){
 		input=UART7_Recieve_char();
@@ -122,8 +177,8 @@ wait_ms(2000);
 		
 		input=UART7_Recieve_char();
 		
-		for(i=0;input!=',';i++){
-			log_c[i]=input;
+		for(k=0;input!=',';k++){
+			log_c[k]=input;
 			input=UART7_Recieve_char();
 			
 		}
@@ -141,25 +196,40 @@ wait_ms(2000);
 		ss=ss-lat[counter];
 		ss/=0.6;
 		lat[counter]+=ss;
-		if(counter<200)
-			fprintf(fptr,"%f, %f",lat[counter],logg[counter]);
-		if(j%5==0||j==0)
-			counter++;
+		if(j==0||j%5==0){
+		counter++;
+		distance+=get_distance_meters();
+		lcd_comm(0xC0);
+		lcd_num(distance);
+		ftoa(lat[counter-1],lat_c,8);
+		ftoa(logg[counter-1],log_c,8);
+		UART0_Trans_string(lat_c);
+		UART0_Trans_char(',');
+		UART0_Trans_string(log_c);
+		UART0_Trans_char('\n');
+		}
 		j++;
+		
+		is_distance_equal_100(distance);
+		//if(distance>=10&&!flag){
+		//	for(j=0;j<counter;j++)
+		//	{
+		//		fprintf(fptr,"%f,%f",lat[j],logg[j]);
+		//		fclose(fptr);
+		//	}}
+		//	flag=1;
+		//}
+		//if (counter>=20)
+				//fclose(fptr);
 		//lcd_comm(0x80);
 		//lcd_string("Lat:");
 		//lcd_num(lat[counter-1]);
 		//lcd_comm(0xC0);
 		//lcd_string("Long:");
 		//lcd_num(logg[counter-1]);
-		distance+=get_distance_meters();
-		lcd_comm(0xC0);
-		lcd_num(distance);
-		if (counter>=200)
-			fclose(fptr);
+		
 	}
 }
-	
 	
 	
 	
