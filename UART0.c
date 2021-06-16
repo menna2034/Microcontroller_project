@@ -14,11 +14,8 @@ void UART0_init(uint32 baudrate,uint8 frame){
 	GPIO_PORTA_AFSEL_R|=0x03;
 	GPIO_PORTA_PCTL_R=0x11;
 
-	br=(16*10^6)/(16*baudrate);
-	UART0_IBRD_R=(uint32)br;
-	br-=(uint32)br;
-	br=(br*64)+0.5;
-	UART0_FBRD_R=(uint32)br;
+	UART0_IBRD_R=104;
+	UART0_FBRD_R=11;
 		
 	UART0_CC_R=0;
 	
