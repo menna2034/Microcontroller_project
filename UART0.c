@@ -1,14 +1,14 @@
 #include "UART0.h"
 void UART0_init(uint32 baudrate,uint8 frame){
 	float br;
-	SYSCTL_RCGCUART_R|=0x1;
-	SYSCTL_RCGCGPIO_R|=0x01;
-	while((SYSCTL_PRGPIO_R & 0x01)==0){}
+	SYSCTL_RCGCUART_R|=0x1; //clock connect to UART
+	SYSCTL_RCGCGPIO_R|=0x01; //clock connect to port A
+	while((SYSCTL_PRGPIO_R & 0x01)==0){} //
 		
 	UART0_CTL_R=0;
 
-	GPIO_PORTF_LOCK_R=0x4C4F434B;
-	GPIO_PORTF_CR_R|=0xFF; 
+	GPIO_PORTA_LOCK_R=0x4C4F434B;
+	GPIO_PORTA_CR_R|=0xFF; 
 	GPIO_PORTA_DEN_R|=0x03;
 	GPIO_PORTA_AMSEL_R&=~(0x03);
 	GPIO_PORTA_AFSEL_R|=0x03;
